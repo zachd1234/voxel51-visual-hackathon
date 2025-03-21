@@ -16,7 +16,7 @@ def process_video(video_path, classes, output_path=None, confidence=0.003):
         device = "cpu"
     print(f"Using device: {device}")
     
-    # Initialize YOLO-World model with MPS support
+    # Initialize YOLO-World model
     model = YOLOWorld(model_id="yolo_world/l")
     model.set_classes(classes)
     
