@@ -1,18 +1,17 @@
 # YOLO-World Video Object Detection
-# This script demonstrates how to use YOLO-World for real-time object detection in videos.
-
 # Install required packages
-# !pip install ultralytics opencv-python-headless
+
 
 import cv2
-from ultralytics import YOLO
-import numpy as np
+import supervision as sv
+from inference.models.yolo_world.yolo_world import YOLOWorld
 import time
 
-# Initialize YOLO-World Model
-model = YOLO('yolov8s-world.pt')
-
-def process_video(video_path, output_path=None):
+def process_video(video_path, classes, output_path=None, confidence=0.003):
+    # Initialize YOLO-World model (using large model for better accuracy)
+    model = YOLOWorld(model_id="yolo_world/l")
+    model.set_classes(classes)
+    
     # Open video capture
     cap = cv2.VideoCapture(video_path)
     
@@ -26,6 +25,10 @@ def process_video(video_path, output_path=None):
     if output_path:
         writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
     
+    # Initialize annotators
+    box_annotator = sv.BoundingBoxAnnotator(thickness=2)
+    label_annotator = sv.LabelAnnotator(text_thickness=2, text_scale=1, text_color=sv.Color.BLACK)
+    
     frame_count = 0
     start_time = time.time()
     
@@ -34,11 +37,21 @@ def process_video(video_path, output_path=None):
         if not ret:
             break
             
-        # Perform detection using standard YOLO predict
-        results = model.predict(source=frame, conf=0.25)
+        # Perform detection
+        results = model.infer(frame, confidence=confidence)
+        detections = sv.Detections.from_inference(results).with_nms(threshold=0.1)
         
-        # Draw detections
-        annotated_frame = results[0].plot()
+        # Create labels with confidence scores
+        labels = [
+            f"{classes[class_id]} {confidence:0.3f}"
+            for class_id, confidence
+            in zip(detections.class_id, detections.confidence)
+        ]
+        
+        # Draw annotations
+        annotated_frame = frame.copy()
+        annotated_frame = box_annotator.annotate(annotated_frame, detections)
+        annotated_frame = label_annotator.annotate(annotated_frame, detections, labels=labels)
         
         # Calculate and display FPS
         frame_count += 1
@@ -50,7 +63,7 @@ def process_video(video_path, output_path=None):
                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         
         # Display frame
-        cv2.imshow('YOLO Detection', annotated_frame)
+        cv2.imshow('YOLO-World Detection', annotated_frame)
         
         # Write frame if output path is provided
         if writer:
@@ -68,7 +81,12 @@ def process_video(video_path, output_path=None):
 
 if __name__ == "__main__":
     # Example usage
-    video_path = "dataset/keeptrack-house-video-with-audio-horizontal-720p.mov"  # Replace with your video path
+    video_path = "dataset/keeptrack-house-video-with-audio-horizontal-720p test.mov"
+    
+    # Define the classes you want to detect
+    classes = ["green chair"]
+    
     output_path = "output.mp4"  # Optional: path to save the processed video
     
-    process_video(video_path, output_path) 
+    # Process video with low confidence threshold and NMS
+    process_video(video_path, classes, output_path, confidence=0.25)
