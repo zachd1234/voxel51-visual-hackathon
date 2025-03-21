@@ -1,2 +1,5 @@
 .DS_Store
 env/
+dataset/
+output.mp4
+yolov8s-world.pt
