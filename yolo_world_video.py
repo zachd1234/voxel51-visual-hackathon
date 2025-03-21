@@ -4,7 +4,7 @@ import cv2
 import supervision as sv
 from inference.models.yolo_world.yolo_world import YOLOWorld
 import time
-import torch  # Add torch import to check device availability
+import torch
 
 def process_video(video_path, classes, output_path=None, confidence=0.003):
     # Check if MPS is available (for Apple Silicon)
@@ -51,7 +51,7 @@ def process_video(video_path, classes, output_path=None, confidence=0.003):
         
         # Create labels with confidence scores
         labels = [
-            f"{classes[class_id]} {conf:0.3f}"  # Changed confidence to conf to avoid name conflict
+            f"{classes[class_id]} {conf:0.3f}"
             for class_id, conf
             in zip(detections.class_id, detections.confidence)
         ]
