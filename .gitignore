@@ -3,3 +3,15 @@ env/
 dataset/
 output.mp4
 yolov8s-world.pt
+*.mp4
+*.avi
+*.mov
+*.wmv
+*.flv
+*.mkv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
